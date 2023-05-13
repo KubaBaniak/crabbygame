@@ -1,19 +1,34 @@
 use rand::Rng;
-use crate::characters::Damage;
-use crate::characters::Alive;
+use crate::characters::{ Damage, Alive };
+use sdl2::rect::{ Point, Rect };
+
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 pub struct Player {
     hp: i8,
     crit: u8,
     dmg: u8,
+    pub position: Point,
+    pub sprite: Rect,
+    pub speed: i32,
+    pub direction: Direction,
 }
 
 impl Player {
-    pub fn new() -> Self {
+    pub fn new(point: Point, rect: Rect) -> Self {
         Player {
             hp: 100,
             crit: 60,
             dmg: 25,
+            position: point,
+            sprite: rect,
+            speed: 0,
+            direction: Direction::Right
         }
     }
 }
