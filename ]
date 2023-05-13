@@ -1,0 +1,115 @@
+use rand::Rng;
+
+struct World<T, U> {
+    player: T,
+    enemy: U,
+}
+
+impl World<T, U> {
+    fn test(&self) {
+        self.player
+    }
+}
+
+impl <T: Damage + Alive, U: Damage + Alive> World<T, U> {
+    fn fight(&mut self) {
+        while (self.enemy.is_alive() && self.player.is_alive()) {
+            self.enemy.take_damage();
+            self.enemy.is_alive();
+            self.player.take_damage(3);
+            self.player.is_alive();
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Player {
+    hp: u8,
+    crit: u8,
+    dmg: u8,
+    exp: u8,
+}
+
+impl Player {
+    fn new() -> Self {
+        Player {
+            hp: 100,
+            crit: 60,
+            dmg: 25,
+            exp: 0,
+        }
+    }
+
+    fn get_dmg(&self) -> u8 {
+        self.dmg
+    }
+}
+
+impl Damage for Player {
+    fn take_damage(&mut self, damage: u8) {
+        let num: u8 = rand::thread_rng().gen_range(0..100);
+        if num <= self.crit {
+            self.hp -= 2*damage;
+        } else {
+            self.hp -= damage;
+        }
+        println!("Player's Health left: {}", self.hp);
+    }
+}
+impl Alive for Player {
+    fn is_alive(&self) -> bool {
+        self.hp > 0
+    } 
+}
+
+#[derive(Debug)]
+struct Enemy {
+    hp: u8,
+    crit: u8,
+    dmg: u8,
+    exp_reward: u8,
+}
+
+impl Enemy {
+    fn new() -> Self {
+        Enemy {
+            hp: 60,
+            crit: 20,
+            dmg: 15,
+            exp_reward: 15,
+        }
+    }
+
+}
+
+impl Damage for Enemy {
+    fn take_damage(&mut self, damage: u8) {
+        let num: u8 = rand::thread_rng().gen_range(0..100);
+        if num <= self.crit {
+            self.hp -= 2*self.dmg;
+        } else {
+            self.hp -= self.dmg;
+        }
+        println!("Enemy's Health left: {}", self.hp);
+    }
+}
+impl Alive for Enemy {
+    fn is_alive(&self) -> bool {
+        self.hp > 0
+    }
+}
+
+trait Damage {
+    fn take_damage(&mut self, damage: u8);
+}
+
+trait Alive {
+    fn is_alive(&self) -> bool;
+}
+
+fn main() {
+    let mut world = World {
+        player: Player::new(),
+        enemy: Enemy::new()
+    };
+}
