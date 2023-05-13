@@ -2,6 +2,7 @@ use rand::Rng;
 use crate::characters::{ Damage, Alive };
 use sdl2::rect::{ Point, Rect };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     Up,
     Down,
