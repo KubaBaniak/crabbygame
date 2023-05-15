@@ -4,10 +4,10 @@ use sdl2::rect::{ Point, Rect };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
+    K,
+    J,
+    H,
+    L,
 }
 
 pub struct Player {
@@ -18,6 +18,7 @@ pub struct Player {
     pub sprite: Rect,
     pub speed: i32,
     pub direction: Direction,
+    pub current_frame: i32,
 }
 
 impl Player {
@@ -29,7 +30,8 @@ impl Player {
             position: point,
             sprite: rect,
             speed: 0,
-            direction: Direction::Right
+            direction: Direction::H,
+            current_frame: 0,
         }
     }
 }

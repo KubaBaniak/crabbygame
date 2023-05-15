@@ -1,6 +1,7 @@
 extern crate sdl2;
 use crate::characters::player::Direction;
-use crate::{ Player, Enemy };
+use crate::characters::player::*;
+use crate::characters::enemy::*;
 use crate::World;
 
 
@@ -9,11 +10,22 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::render::{ WindowCanvas, Texture };
 use sdl2::image::{ self, LoadTexture, InitFlag };
-use std::collections::VecDeque;
-use std::time::Duration;
 use sdl2::rect::{ Point, Rect };
 
+use std::collections::VecDeque;
+use std::time::Duration;
+
 const PLAYER_MOVEMENT_SPEED: i32 = 20;
+
+fn direction_spritesheet_row(direction: Direction) -> i32 {
+    use self::Direction::*;
+    match direction {
+        J => 0,
+        K => 1,
+        H => 2,
+        L => 3,
+    }
+}
 
 fn render(
     canvas: &mut WindowCanvas,
@@ -27,21 +39,34 @@ fn render(
     canvas.clear();
 
     let (width, height) = canvas.output_size()?;
+
+    let (frame_width, frame_height) = player.sprite.size();
+
+    let current_frame = Rect::new(
+        player.sprite.x() + frame_width as i32 * player.current_frame,
+        player.sprite.y() + frame_height as i32 * direction_spritesheet_row(player.direction),
+        frame_width,
+        frame_height
+        );
     // make center of screen as (0, 0)
-    let screen_position = player.position + Point::new(width as i32 / 2, height as i32 /2);
+    let screen_position = player.position + Point::new(width as i32 / 2,
+                                                       height as i32 / 2);
     // create rectangle in center width the width of sprite fragment
-    let screen_rect = Rect::from_center(screen_position, player.sprite.width(), player.sprite.height());
+    let screen_rect = Rect::from_center(screen_position,
+                                        frame_width,
+                                        frame_height);
     // get the texture, copy the fragment of original sprice and put it in created rectangle
-    canvas.copy(texture, player.sprite, screen_rect)?;
+    canvas.copy(texture, current_frame, screen_rect)?;
     canvas.present();
     Ok(())
 }
 
 fn update_player(player: &mut Player, arrow_keys: &VecDeque<Keycode>) {
 
+    // check if two opposite keys are pressed
     if arrow_keys.len() > 1 {
-        let vertical_keys = [Keycode::Up, Keycode::Down];
-        let horizontal_keys = [Keycode::Left, Keycode::Right];
+        let vertical_keys = [Keycode::K, Keycode::J];
+        let horizontal_keys = [Keycode::H, Keycode::L];
 
         let has_vertical_keys = arrow_keys.iter()
             .all(|&key| vertical_keys.contains(&key));
@@ -53,12 +78,13 @@ fn update_player(player: &mut Player, arrow_keys: &VecDeque<Keycode>) {
             return
         } 
     }
+    // Set direction to last pressed key
     if let Some(last_key) = arrow_keys.back() {
         player.direction = match *last_key {
-            Keycode::Up => Direction::Up,
-            Keycode::Down => Direction::Down,
-            Keycode::Right => Direction::Right,
-            Keycode::Left => Direction::Left,
+            Keycode::K => Direction::K,
+            Keycode::J => Direction::J,
+            Keycode::L => Direction::L,
+            Keycode::H => Direction::H,
             _ => player.direction,
         };
     }
@@ -69,17 +95,21 @@ fn update_player(player: &mut Player, arrow_keys: &VecDeque<Keycode>) {
         PLAYER_MOVEMENT_SPEED
     };
 
+    if player.speed != 0 {
+        player.current_frame = (player.current_frame + 1) % 2;
+    }
+
     match player.direction {
-        Direction::Up => {
+        Direction::K => {
             player.position = player.position.offset(0, -player.speed)
         },
-        Direction::Down => {
+        Direction::J => {
             player.position = player.position.offset(0, player.speed)
         },
-        Direction::Right => {
+        Direction::L => {
             player.position = player.position.offset(player.speed, 0)
         },
-        Direction::Left => {
+        Direction::H => {
             player.position = player.position.offset(-player.speed, 0)
         },
     }
@@ -119,7 +149,7 @@ pub fn initalize_sdl() -> Result<(), String> {
                 }
                 Event::KeyDown { keycode: Some(key), repeat: false, ..} => {
                     match key {
-                        Keycode::Up | Keycode::Down | Keycode::Left | Keycode::Right => {
+                        Keycode::K | Keycode::J | Keycode::H | Keycode::L => {
                             arrow_keys.push_back(key);
                             println!("pushing {:?}", key);
                         },
@@ -128,15 +158,16 @@ pub fn initalize_sdl() -> Result<(), String> {
                 },
                 Event::KeyUp { keycode: Some(key), repeat: false, ..} => {
                     match key {
-                        Keycode::Up | Keycode::Down | Keycode::Left | Keycode::Right => {
-                            if let Some(index) = arrow_keys.iter().position(|&k| k == key){
+                        Keycode::K | Keycode::J | Keycode::H | Keycode::L => {
+                            if let Some(index) = arrow_keys.iter()
+                                .position(|&k| k == key){
                                 arrow_keys.remove(index);
                             };
                         },
                         _ => {}
                     };
                 },
-                _ => {println!("{:?}", event)}
+                _ => {}
             };
         };
         i = (i + 1) % 255;
